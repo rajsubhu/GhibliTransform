@@ -67,8 +67,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "Authorization": `Token ${REPLICATE_API_KEY}`
         },
         body: JSON.stringify({
-          // Use the Mirage Ghibli model version
-          version: "3dbb3f4e46500c7a342d67d86669b4b934fe78b3c662646f7bce3250b4b0ad27",
+          // Use the Mirage Ghibli model 
+          version: "cccay1e7f5b0e0b0bea9cbd20ea863d26b0130f4e52a7b713c0914a8f1c695a1",
           input: {
             image: dataURI,
             // Add optional parameters
