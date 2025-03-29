@@ -23,11 +23,6 @@ export function Header() {
               </Link>
             </li>
             <li>
-              <a href="#store" className="font-medium hover:text-primary transition-all">
-                Store
-              </a>
-            </li>
-            <li>
               <Link href="/gallery" className="font-medium hover:text-primary transition-all">
                 Gallery
               </Link>
@@ -60,11 +55,6 @@ export function Header() {
                 <Link href="/" className="block font-medium hover:text-primary transition-all">
                   Home
                 </Link>
-              </li>
-              <li className="py-2 border-b">
-                <a href="#store" className="block font-medium hover:text-primary transition-all" onClick={() => setIsMobileMenuOpen(false)}>
-                  Store
-                </a>
               </li>
               <li className="py-2 border-b">
                 <Link href="/gallery" className="block font-medium hover:text-primary transition-all">

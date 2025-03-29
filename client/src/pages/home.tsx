@@ -3,7 +3,6 @@ import { ImageTransformer } from "@/components/image-transformer";
 import { Features } from "@/components/features";
 import { FAQ } from "@/components/faq";
 import { Footer } from "@/components/footer";
-import { Store } from "@/components/store";
 
 export default function Home() {
   return (
@@ -28,9 +27,6 @@ export default function Home() {
         
         {/* Main Image Transformer Component */}
         <ImageTransformer />
-        
-        {/* Store Section */}
-        <Store />
         
         {/* Features Section */}
         <Features />
