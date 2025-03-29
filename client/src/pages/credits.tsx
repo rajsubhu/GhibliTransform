@@ -178,47 +178,61 @@ export default function CreditsPage() {
   }
 
   return (
-    <div className="container py-8">
-      <div className="flex flex-col gap-8">
+    <div className="container max-w-5xl py-12">
+      <div className="flex flex-col gap-10">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Purchase Credits</h1>
-          <p className="text-muted-foreground mb-6">
-            Buy credits to transform more images into Ghibli style
+          <h1 className="text-4xl font-bold mb-4 text-primary">Purchase Credits</h1>
+          <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+            Transform your photos into beautiful Ghibli-style artwork with our credit packages
           </p>
-          <div className="inline-flex items-center gap-2 bg-muted px-4 py-2 rounded-full">
-            <CreditCard className="h-4 w-4" />
-            <span>Your current balance: </span>
-            <Badge variant="default" className="text-sm font-semibold">
+          <div className="inline-flex items-center gap-3 bg-muted/50 px-6 py-3 rounded-full shadow-sm border border-muted">
+            <CreditCard className="h-5 w-5 text-primary" />
+            <span className="font-medium">Your current balance: </span>
+            <Badge variant="default" className="text-sm font-semibold px-3 py-1 bg-primary">
               {user.credits} credits
             </Badge>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-3">
           {creditPackages.map((pkg) => (
             <Card 
               key={pkg.id}
-              className={`relative cursor-pointer transition-all hover:shadow-md ${
+              className={`relative cursor-pointer transition-all hover:shadow-lg ${
                 selectedPackage?.id === pkg.id 
-                  ? 'ring-2 ring-primary ring-offset-2' 
-                  : ''
+                  ? 'ring-2 ring-primary ring-offset-2 shadow-md' 
+                  : 'border-muted'
               }`}
               onClick={() => handlePackageSelect(pkg)}
             >
               {selectedPackage?.id === pkg.id && (
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-3 right-3">
                   <CheckCircle className="h-6 w-6 text-primary" />
                 </div>
               )}
-              <CardHeader>
-                <CardTitle>{pkg.description}</CardTitle>
-                <CardDescription>Transform {pkg.credits} images</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className={selectedPackage?.id === pkg.id ? "text-primary" : ""}>
+                  {pkg.description}
+                </CardTitle>
+                <CardDescription>Create {pkg.credits} stunning Ghibli transformations</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">₹{pkg.amount}</div>
-                <div className="text-muted-foreground mt-1">
-                  {pkg.credits} credits
+                <div className="flex items-baseline mt-2">
+                  <div className="text-4xl font-bold">₹{pkg.amount}</div>
+                  <div className="text-muted-foreground ml-2">one-time</div>
                 </div>
+                <div className="flex items-center mt-4 bg-muted/50 py-2 px-3 rounded-md">
+                  <Badge variant="outline" className="mr-2 px-2">
+                    {pkg.credits}
+                  </Badge> 
+                  <span className="text-sm font-medium">credits included</span>
+                </div>
+                
+                {pkg.id === 'premium' && (
+                  <Badge variant="secondary" className="mt-4 w-full justify-center py-1">
+                    Best Value
+                  </Badge>
+                )}
               </CardContent>
               <CardFooter>
                 <Button 
@@ -226,27 +240,32 @@ export default function CreditsPage() {
                   className="w-full"
                   onClick={() => handlePackageSelect(pkg)}
                 >
-                  {selectedPackage?.id === pkg.id ? 'Selected' : 'Select'}
+                  {selectedPackage?.id === pkg.id ? 'Selected' : 'Select Package'}
                 </Button>
               </CardFooter>
             </Card>
           ))}
         </div>
 
-        <div className="flex justify-center mt-6">
+        <div className="flex flex-col items-center mt-6">
           <Button 
             size="lg" 
             disabled={!selectedPackage || paymentProcessing} 
             onClick={processPayment}
-            className="px-8"
+            className="px-10 py-6 text-lg font-semibold shadow-md"
           >
             {paymentProcessing && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-3 h-5 w-5 animate-spin" />
             )}
             {paymentProcessing 
-              ? 'Processing...' 
-              : `Pay ₹${selectedPackage?.amount || 0}`}
+              ? 'Processing Payment...' 
+              : selectedPackage 
+                ? `Pay ₹${selectedPackage.amount} Now` 
+                : 'Select a Package'}
           </Button>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Secure payment processed by Razorpay
+          </p>
         </div>
       </div>
     </div>

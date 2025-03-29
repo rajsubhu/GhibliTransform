@@ -138,62 +138,72 @@ export default function Profile() {
   }
 
   return (
-    <div className="container py-8">
+    <div className="container max-w-5xl py-8">
+      <h1 className="text-3xl font-bold mb-8 text-center">My Profile</h1>
       <div className="flex flex-col gap-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           {/* User Info Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>Your account information</CardDescription>
+          <Card className="bg-white shadow-lg border-none">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-primary">Profile Information</CardTitle>
+              <CardDescription>Your account details and current credits</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Email</h3>
-                  <p>{user.email}</p>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Email</h3>
+                  <p className="font-medium">{user.email}</p>
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Credits</h3>
-                  <p className="text-2xl font-bold">{user.credits}</p>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Available Credits</h3>
+                  <div className="flex items-center mt-1">
+                    <p className="text-3xl font-bold text-primary">{user.credits}</p>
+                    <Badge variant="outline" className="ml-2 px-3 py-0.5">credits</Badge>
+                  </div>
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Instagram</h3>
-                  <p>{user.instagram_username || 'Not connected'}</p>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-1">Instagram</h3>
+                  {user.instagram_username ? (
+                    <Badge variant="secondary" className="font-medium text-sm">
+                      @{user.instagram_username}
+                    </Badge>
+                  ) : (
+                    <p className="text-muted-foreground italic">Not connected</p>
+                  )}
                 </div>
               </div>
             </CardContent>
             <CardFooter>
-              <Button asChild className="w-full">
-                <Link href="/credits">Buy Credits</Link>
+              <Button asChild className="w-full bg-primary hover:bg-primary/90">
+                <Link href="/credits">Buy More Credits</Link>
               </Button>
             </CardFooter>
           </Card>
 
           {/* Instagram Verification Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Earn Credits</CardTitle>
-              <CardDescription>Verify your Instagram for bonus credits</CardDescription>
+          <Card className="bg-white shadow-lg border-none">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-primary">Get Free Credits</CardTitle>
+              <CardDescription>One-time Instagram verification bonus</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmitInstagram)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmitInstagram)} className="space-y-5">
                   <FormField
                     control={form.control}
                     name="instagram_username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Instagram Username</FormLabel>
+                        <FormLabel>Your Instagram Username</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="your_instagram_handle"
+                            placeholder="username (without @)"
                             {...field}
-                            disabled={instagramMutation.isPending}
+                            disabled={instagramMutation.isPending || !!user.instagram_username}
                           />
                         </FormControl>
                         <FormDescription>
-                          Enter your Instagram username to earn 2 additional credits
+                          Verify your Instagram to earn <Badge variant="outline">+2 credits</Badge>
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -201,10 +211,11 @@ export default function Profile() {
                   />
                   <Button
                     type="submit"
-                    disabled={instagramMutation.isPending}
-                    className="w-full"
+                    disabled={instagramMutation.isPending || !!user.instagram_username}
+                    className="w-full bg-primary hover:bg-primary/90"
                   >
-                    {instagramMutation.isPending ? 'Verifying...' : 'Verify & Earn Credits'}
+                    {instagramMutation.isPending ? 'Verifying...' : 
+                     user.instagram_username ? 'Already Verified' : 'Verify & Get 2 Credits'}
                   </Button>
                 </form>
               </Form>
@@ -213,14 +224,14 @@ export default function Profile() {
         </div>
 
         {/* Activity Tabs */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Activity History</CardTitle>
+        <Card className="bg-white shadow-lg border-none mt-4">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-primary">Activity History</CardTitle>
             <CardDescription>Your credits and transformations history</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="credits" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-4">
+              <TabsList className="mb-6">
                 <TabsTrigger value="credits">Credits History</TabsTrigger>
                 <TabsTrigger value="transformations">Transformations</TabsTrigger>
               </TabsList>
@@ -276,24 +287,33 @@ export default function Profile() {
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {transformationsQuery.data?.map((transformation: any) => (
-                      <Card key={transformation.id}>
-                        <CardContent className="p-4">
-                          <div className="space-y-4">
-                            <div className="aspect-video relative overflow-hidden rounded-md">
+                      <Card key={transformation.id} className="overflow-hidden border-none shadow-md hover:shadow-lg transition-all">
+                        <CardContent className="p-0">
+                          <div className="relative">
+                            <div className="aspect-square relative overflow-hidden">
                               {transformation.transformed_image ? (
                                 <img
                                   src={transformation.transformed_image}
                                   alt="Transformed image"
-                                  className="object-cover w-full h-full"
+                                  className="object-cover w-full h-full hover:scale-105 transition-transform"
                                 />
                               ) : (
-                                <div className="flex items-center justify-center h-full bg-muted">
-                                  <Badge variant="outline">{transformation.status}</Badge>
+                                <div className="flex items-center justify-center h-full bg-muted p-4">
+                                  <Badge variant="outline" className="px-3 py-1">
+                                    {transformation.status || 'Processing'}
+                                  </Badge>
                                 </div>
                               )}
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              {formatDate(transformation.created_at)}
+                            <div className="p-3 bg-white">
+                              <div className="flex justify-between items-center">
+                                <Badge variant="secondary" className="font-medium">
+                                  Ghibli Style
+                                </Badge>
+                                <div className="text-xs text-muted-foreground">
+                                  {formatDate(transformation.created_at)}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </CardContent>
