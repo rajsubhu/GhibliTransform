@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Star, Package, Image, Gift, Zap, ShoppingCart } from "lucide-react";
+import { Check, Star, Package, Image, Gift, Zap, ShoppingCart, Sparkles } from "lucide-react";
+import { useCart, Product } from "@/contexts/cart-context";
 
-// Sample product types
+// Ghibli-themed product types
 const productTypes = [
   {
     id: "digital",
@@ -25,12 +26,12 @@ const productTypes = [
   }
 ];
 
-// Sample products
-const products = [
+// Ghibli-themed products
+const ghibliProducts = [
   {
     id: 1,
     type: "digital",
-    name: "Digital Artwork - Standard License",
+    name: "Ghibli Digital Art - Personal License",
     price: 9.99,
     features: [
       "High-resolution digital file",
@@ -44,7 +45,7 @@ const products = [
   {
     id: 2,
     type: "digital",
-    name: "Digital Artwork - Extended License",
+    name: "Ghibli Digital Art - Commercial License",
     price: 29.99,
     features: [
       "High-resolution digital file",
@@ -60,12 +61,12 @@ const products = [
   {
     id: 3,
     type: "prints",
-    name: "Premium Art Print - 12\" x 16\"",
+    name: "Totoro Forest Art Print - 12\" x 16\"",
     price: 39.99,
     features: [
       "Gallery-quality printing",
       "Archival paper",
-      "Vibrant colors",
+      "Vibrant Ghibli-inspired colors",
       "Ready to frame",
       "Signed digital certificate",
       "Worldwide shipping"
@@ -76,7 +77,7 @@ const products = [
   {
     id: 4,
     type: "prints",
-    name: "Framed Art Print - 18\" x 24\"",
+    name: "Spirited Away Framed Art - 18\" x 24\"",
     price: 89.99,
     features: [
       "Gallery-quality printing",
@@ -93,11 +94,11 @@ const products = [
   {
     id: 5,
     type: "merchandise",
-    name: "Custom T-Shirt with Your Artwork",
+    name: "My Neighbor Totoro T-Shirt",
     price: 29.99,
     features: [
-      "Premium fabric",
-      "Your Ghibli-style image",
+      "Premium cotton fabric",
+      "Your custom Ghibli-style image",
       "Multiple sizes available",
       "Long-lasting print",
       "Machine washable",
@@ -109,38 +110,84 @@ const products = [
   {
     id: 6,
     type: "merchandise",
-    name: "Custom Merchandise Bundle",
+    name: "Spirited Away Merchandise Bundle",
     price: 99.99,
     features: [
-      "T-shirt with your artwork",
-      "Coffee mug with your artwork",
-      "Phone case with your artwork",
-      "Tote bag with your artwork",
+      "T-shirt with your Ghibli artwork",
+      "Coffee mug with custom artwork",
+      "Phone case with magical spirits",
+      "Tote bag with forest spirits",
       "Premium quality materials",
       "Global shipping"
     ],
     popular: true,
     image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 7,
+    type: "digital",
+    name: "Howl's Moving Castle Digital Pack",
+    price: 14.99,
+    features: [
+      "Collection of 5 digital wallpapers",
+      "Phone, tablet and desktop sizes",
+      "Magical castle theme",
+      "Personal use only"
+    ],
+    popular: false,
+    image: "https://images.unsplash.com/photo-1510925758641-869d353cecc7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 8,
+    type: "prints",
+    name: "Kiki's Delivery Service Canvas Print",
+    price: 59.99,
+    features: [
+      "Premium stretched canvas",
+      "Flying witch themed artwork",
+      "Ready to hang",
+      "Fade-resistant inks",
+      "Available in multiple sizes"
+    ],
+    popular: false,
+    image: "https://images.unsplash.com/photo-1579783901586-d88db74b4fe4?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 9,
+    type: "merchandise",
+    name: "Princess Mononoke Hoodie",
+    price: 49.99,
+    features: [
+      "Warm, cozy hoodie",
+      "Forest spirit designs",
+      "Premium cotton-polyester blend",
+      "Machine washable",
+      "Unisex design"
+    ],
+    popular: false,
+    image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
   }
 ];
 
 export function Store() {
   const [activeTab, setActiveTab] = useState("digital");
   const { toast } = useToast();
+  const { addToCart } = useCart();
   
-  const handleAddToCart = (productId: number, productName: string) => {
+  const handleAddToCart = (product: Product) => {
+    addToCart(product);
     toast({
       title: "Added to Cart!",
-      description: `${productName} has been added to your cart.`,
+      description: `${product.name} has been added to your cart.`,
     });
   };
   
   return (
     <section className="py-12" id="store">
       <div className="text-center mb-10">
-        <h2 className="text-3xl font-bold mb-4">Transform Your Images into Products</h2>
+        <h2 className="text-3xl font-bold mb-4">Transform Your Images into Ghibli Products</h2>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Take your Ghibli-style artwork to the next level with our premium products. From digital downloads to physical merchandise, bring your transformed images to life.
+          Take your Ghibli-style artwork to the next level with our premium products. From digital downloads to physical merchandise, bring the magic of Studio Ghibli to life.
         </p>
       </div>
       
@@ -151,7 +198,7 @@ export function Store() {
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
               <Zap size={24} />
             </div>
-            <CardTitle>Superior Quality</CardTitle>
+            <CardTitle>Studio Ghibli Quality</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600">
@@ -163,13 +210,13 @@ export function Store() {
         <Card className="bg-primary/5 border border-primary/20">
           <CardHeader className="pb-2">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
-              <Image size={24} />
+              <Sparkles size={24} />
             </div>
-            <CardTitle>Unique Artwork</CardTitle>
+            <CardTitle>Miyazaki's Magic</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600">
-              Each transformation is completely unique to your image, creating one-of-a-kind artwork with the magical Ghibli touch.
+              Each transformation captures the whimsical and magical aesthetic that makes Studio Ghibli films so beloved worldwide.
             </p>
           </CardContent>
         </Card>
@@ -179,11 +226,11 @@ export function Store() {
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
               <Gift size={24} />
             </div>
-            <CardTitle>Perfect Gifts</CardTitle>
+            <CardTitle>Perfect Ghibli Gifts</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600">
-              Transform personal photos into heartfelt gifts. Create custom merchandise featuring your loved ones in Ghibli style.
+              Transform personal photos into heartfelt gifts for any Studio Ghibli fan. Create custom merchandise featuring your loved ones in Ghibli style.
             </p>
           </CardContent>
         </Card>
@@ -206,8 +253,8 @@ export function Store() {
               <p className="text-gray-600">{type.description}</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {products
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ghibliProducts
                 .filter((product) => product.type === type.id)
                 .map((product) => (
                   <Card key={product.id} className="overflow-hidden relative">
@@ -242,7 +289,7 @@ export function Store() {
                     <CardFooter>
                       <Button 
                         className="w-full gap-2" 
-                        onClick={() => handleAddToCart(product.id, product.name)}
+                        onClick={() => handleAddToCart(product)}
                       >
                         <ShoppingCart size={16} />
                         <span>Add to Cart</span>
@@ -257,22 +304,22 @@ export function Store() {
       
       {/* Testimonials */}
       <div className="mt-16 bg-gray-50 rounded-lg p-8">
-        <h3 className="text-2xl font-bold text-center mb-8">What Our Customers Say</h3>
+        <h3 className="text-2xl font-bold text-center mb-8">What Ghibli Fans Say</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
               name: "Alex Johnson",
-              quote: "I transformed our family vacation photos into Ghibli art and had them printed. They look absolutely magical on our wall!",
+              quote: "I transformed our family vacation photos into Ghibli art and had them printed. They look absolutely magical on our wall, just like scenes from My Neighbor Totoro!",
               rating: 5
             },
             {
               name: "Samantha Lee",
-              quote: "The t-shirts with our pets in Ghibli style were the perfect gift for my anime-loving friends. The quality is outstanding.",
+              quote: "The t-shirts with our pets in Spirited Away style were the perfect gift for my anime-loving friends. The quality is outstanding and truly captures the Ghibli magic.",
               rating: 5
             },
             {
               name: "Michael Chen",
-              quote: "I've tried other art transformers, but this one captures the Ghibli aesthetic perfectly. Worth every penny.",
+              quote: "I've tried other art transformers, but this one captures the Ghibli aesthetic perfectly. My photos now look like they're straight from Howl's Moving Castle. Worth every penny.",
               rating: 5
             }
           ].map((testimonial, index) => (
@@ -295,7 +342,7 @@ export function Store() {
       
       {/* CTA Section */}
       <div className="mt-16 text-center">
-        <h3 className="text-2xl font-bold mb-4">Ready to Transform Your Art into Products?</h3>
+        <h3 className="text-2xl font-bold mb-4">Ready to Transform Your Art into Ghibli Products?</h3>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-6">
           Start by transforming your image with our Ghibli style AI, then choose from our range of high-quality products.
         </p>

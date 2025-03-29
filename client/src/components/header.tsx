@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
+import { Cart } from "@/components/cart";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,15 +41,19 @@ export function Header() {
           </ul>
         </nav>
         
-        <div className="md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 focus:outline-none"
-          >
-            <Menu />
-          </Button>
+        <div className="flex items-center">
+          <Cart />
+          
+          <div className="md:hidden ml-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 focus:outline-none"
+            >
+              <Menu />
+            </Button>
+          </div>
         </div>
 
         {isMobileMenuOpen && (
