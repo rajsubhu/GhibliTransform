@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -57,6 +57,8 @@ function getReasonLabel(reason: string) {
       return 'Admin grant';
     case 'generation':
       return 'Image generation';
+    case 'purchase':
+      return 'Credit purchase';
     default:
       return reason;
   }
@@ -175,6 +177,11 @@ export default function Profile() {
                 </div>
               </div>
             </CardContent>
+            <CardFooter>
+              <Button asChild className="w-full">
+                <Link href="/credits">Buy Credits</Link>
+              </Button>
+            </CardFooter>
           </Card>
 
           {/* Instagram Verification Card */}

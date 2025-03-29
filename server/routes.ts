@@ -7,6 +7,14 @@ import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { insertUserSchema } from "@shared/schema";
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
+
+// Initialize Razorpay
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || '',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || ''
+});
 
 // Define types for type safety
 // Import Express's File type definition but make our own compatible version
@@ -90,6 +98,21 @@ const loginSchema = z.object({
 // Instagram verification schema
 const instagramVerificationSchema = z.object({
   instagram_username: z.string(),
+});
+
+// Razorpay order schema
+const razorpayOrderSchema = z.object({
+  amount: z.number().positive(),
+  currency: z.string().default("INR"),
+  credits: z.number().positive(),
+});
+
+// Razorpay payment verification schema
+const razorpayVerificationSchema = z.object({
+  razorpay_order_id: z.string(),
+  razorpay_payment_id: z.string(),
+  razorpay_signature: z.string(),
+  credits: z.number().positive(),
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -432,6 +455,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get transformations error:", error);
       return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Razorpay payment routes
+  // Create a new order
+  app.post("/api/create-order", authMiddleware, async (req: MulterRequest, res: Response) => {
+    try {
+      // Validate request body
+      const result = razorpayOrderSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { amount, currency, credits } = result.data;
+      
+      // Ensure we have Razorpay keys
+      if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+        return res.status(500).json({ 
+          message: "Server configuration error: Missing payment gateway credentials" 
+        });
+      }
+      
+      // Create an order
+      const options = {
+        amount: amount * 100, // Convert to smallest currency unit (paise for INR)
+        currency,
+        receipt: `receipt_${Date.now()}`,
+        notes: {
+          userId: req.user.id,
+          credits: credits.toString(),
+          purpose: 'credit_purchase'
+        }
+      };
+      
+      const order = await razorpay.orders.create(options);
+      
+      return res.status(200).json({
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        credits
+      });
+    } catch (error) {
+      console.error("Create order error:", error);
+      return res.status(500).json({ message: "Failed to create payment order" });
+    }
+  });
+
+  // Verify a payment
+  app.post("/api/verify-payment", authMiddleware, async (req: MulterRequest, res: Response) => {
+    try {
+      // Validate request body
+      const result = razorpayVerificationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, credits } = result.data;
+      
+      // Verify the payment signature
+      const shasum = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '');
+      shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+      const digest = shasum.digest('hex');
+      
+      if (digest !== razorpay_signature) {
+        return res.status(400).json({ message: "Invalid payment signature" });
+      }
+      
+      // Add credits to user
+      const user = req.user;
+      const updatedUser = await storage.updateUserCredits(user.id, user.credits + credits);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Record the transaction
+      await storage.createCreditsTransaction({
+        user_id: user.id,
+        amount: credits,
+        reason: 'purchase'
+      });
+      
+      return res.status(200).json({
+        message: "Payment verified and credits added",
+        order_id: razorpay_order_id,
+        payment_id: razorpay_payment_id,
+        credits: updatedUser.credits
+      });
+    } catch (error) {
+      console.error("Verify payment error:", error);
+      return res.status(500).json({ message: "Failed to verify payment" });
     }
   });
 

@@ -86,6 +86,12 @@ export function Header() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link href="/credits" className="cursor-pointer flex items-center">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Buy Credits
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <div className="md:hidden cursor-pointer flex items-center">
                       <CreditCard className="mr-2 h-4 w-4" />
                       Credits: {user.credits}
@@ -153,11 +159,18 @@ export function Header() {
                   </li>
                 </>
               ) : (
-                <li className="py-2">
-                  <Link href="/profile" className="block font-medium hover:text-primary transition-all">
-                    My Profile
-                  </Link>
-                </li>
+                <>
+                  <li className="py-2 border-b">
+                    <Link href="/profile" className="block font-medium hover:text-primary transition-all">
+                      My Profile
+                    </Link>
+                  </li>
+                  <li className="py-2">
+                    <Link href="/credits" className="block font-medium hover:text-primary transition-all">
+                      Buy Credits
+                    </Link>
+                  </li>
+                </>
               )}
             </ul>
           </div>

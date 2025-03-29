@@ -20,7 +20,7 @@ export const credits_transactions = pgTable("credits_transactions", {
   id: uuid("id").primaryKey().defaultRandom(),
   user_id: uuid("user_id").references(() => users.id).notNull(),
   amount: integer("amount").notNull(),
-  reason: text("reason", { enum: ['initial', 'instagram_follow', 'admin', 'generation'] }).notNull(),
+  reason: text("reason", { enum: ['initial', 'instagram_follow', 'admin', 'generation', 'purchase'] }).notNull(),
   created_at: text("created_at").notNull(),
 });
 

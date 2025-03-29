@@ -188,7 +188,8 @@ export class MemStorage implements IStorage {
       ...insertUser, 
       id, 
       created_at: now,
-      credits: 1 
+      credits: 1,
+      instagram_username: insertUser.instagram_username || null
     };
     
     this.users.set(id, user);
@@ -243,6 +244,9 @@ export class MemStorage implements IStorage {
       ...transformation,
       id,
       created_at: now,
+      status: transformation.status || 'processing',
+      user_id: transformation.user_id || null,
+      transformed_image: transformation.transformed_image || null
     };
     
     this.transformationsMap.set(id, newTransformation);
