@@ -1,14 +1,10 @@
-import { Header } from "@/components/header";
 import { ImageTransformer } from "@/components/image-transformer";
 import { Features } from "@/components/features";
 import { FAQ } from "@/components/faq";
-import { Footer } from "@/components/footer";
 
 export default function Home() {
   return (
-    <div className="bg-[#F8F9FA] font-sans text-[#202124] min-h-screen">
-      <Header />
-      
+    <div className="bg-[#F8F9FA] font-sans text-[#202124]">
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Hero Section */}
         <section className="text-center mb-12">
@@ -34,8 +30,6 @@ export default function Home() {
         {/* FAQ Section */}
         <FAQ />
       </main>
-      
-      <Footer />
     </div>
   );
 }
