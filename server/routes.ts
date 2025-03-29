@@ -71,6 +71,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           version: "166efd159b4138da932522bc5af40d39194033f587d9bdbab1e594119eae3e7f",
           input: {
             image: dataURI,
+            // Add prompt parameter which is required by this model
+            prompt: "Studio Ghibli style, anime, Hayao Miyazaki, detailed, dreamy, whimsical",
             // Add optional parameters
             strength: 0.75,  // How strongly to transform the image (0-1)
             guidance_scale: 7.5 // How closely to follow the prompt (higher values = closer)
