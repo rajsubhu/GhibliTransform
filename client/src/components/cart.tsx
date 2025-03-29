@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'wouter';
 import { 
   Sheet, 
   SheetClose, 
@@ -10,7 +11,7 @@ import {
   SheetTrigger 
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Minus, Plus, Trash, X } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Trash, ArrowRight } from 'lucide-react';
 import { useCart } from '@/contexts/cart-context';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -18,16 +19,13 @@ import { Separator } from '@/components/ui/separator';
 
 export function Cart() {
   const [open, setOpen] = useState(false);
-  const { state, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { state, removeFromCart, updateQuantity } = useCart();
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   
   const handleCheckout = () => {
-    toast({
-      title: 'Checkout Successful!',
-      description: 'Thank you for your purchase! Your order has been placed.',
-    });
-    clearCart();
     setOpen(false);
+    navigate('/checkout');
   };
   
   return (
@@ -138,8 +136,12 @@ export function Cart() {
               </div>
               
               <SheetFooter className="mt-4">
-                <Button onClick={handleCheckout} className="w-full">
-                  Checkout
+                <Button 
+                  onClick={handleCheckout} 
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  <span>Proceed to Checkout</span>
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </SheetFooter>
             </div>
