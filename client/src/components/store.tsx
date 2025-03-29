@@ -4,8 +4,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Star, Package, Image, Gift, Zap, ShoppingCart, Sparkles } from "lucide-react";
-import { useCart, Product } from "@/contexts/cart-context";
+import { Check, Star, Package, Image, Gift, Zap, Info, Sparkles } from "lucide-react";
+
+interface Product {
+  id: number;
+  type: string;
+  name: string;
+  price: number;
+  features: string[];
+  popular: boolean;
+  image: string;
+}
 
 // Ghibli-themed product types
 const productTypes = [
@@ -172,13 +181,11 @@ const ghibliProducts = [
 export function Store() {
   const [activeTab, setActiveTab] = useState("digital");
   const { toast } = useToast();
-  const { addToCart } = useCart();
   
-  const handleAddToCart = (product: Product) => {
-    addToCart(product);
+  const handleProductInfo = (product: Product) => {
     toast({
-      title: "Added to Cart!",
-      description: `${product.name} has been added to your cart.`,
+      title: "Product Information",
+      description: `${product.name} - $${product.price.toFixed(2)}`,
     });
   };
   
@@ -289,10 +296,10 @@ export function Store() {
                     <CardFooter>
                       <Button 
                         className="w-full gap-2" 
-                        onClick={() => handleAddToCart(product)}
+                        onClick={() => handleProductInfo(product)}
                       >
-                        <ShoppingCart size={16} />
-                        <span>Add to Cart</span>
+                        <Info size={16} />
+                        <span>View Details</span>
                       </Button>
                     </CardFooter>
                   </Card>
