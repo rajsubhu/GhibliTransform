@@ -64,13 +64,21 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
     const user = await storage.getUserByEmail(data.user.email || '');
     
     if (!user) {
-      // First time user - create record in our storage
-      const newUser = await storage.createUser({
-        email: data.user.email || '',
-        credits: 1,
-      });
-      
-      (req as MulterRequest).user = newUser;
+      try {
+        // First time user - create record in our storage
+        const newUser = await storage.createUser({
+          email: data.user.email || '',
+          credits: 1,
+          instagram_username: null,
+          instagram_verified: 0,
+          is_admin: 0
+        });
+        
+        (req as MulterRequest).user = newUser;
+      } catch (createError) {
+        console.error('User creation error:', createError);
+        return res.status(500).json({ message: 'Failed to create user profile' });
+      }
     } else {
       (req as MulterRequest).user = user;
     }
@@ -209,6 +217,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.createUser({
           email,
           credits: 1,
+          instagram_username: null,
+          instagram_verified: 0,
+          is_admin: 0
         });
       }
       

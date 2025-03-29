@@ -61,9 +61,18 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
+    // Add timestamp and default values
+    const userWithDefaults = {
+      ...user,
+      created_at: new Date().toISOString(),
+      credits: user.credits || 1,
+      instagram_verified: user.instagram_verified || 0,
+      is_admin: user.is_admin || 0
+    };
+    
     const { data, error } = await supabase
       .from('users')
-      .insert([user])
+      .insert([userWithDefaults])
       .select()
       .single();
     
@@ -119,9 +128,15 @@ export class SupabaseStorage implements IStorage {
 
   // Credits transaction methods
   async createCreditsTransaction(transaction: InsertCreditsTransaction): Promise<CreditsTransaction> {
+    // Add timestamp if not present
+    const transactionWithTimestamp = {
+      ...transaction,
+      created_at: new Date().toISOString()
+    };
+    
     const { data, error } = await supabase
       .from('credits_transactions')
-      .insert([transaction])
+      .insert([transactionWithTimestamp])
       .select()
       .single();
     
@@ -145,9 +160,15 @@ export class SupabaseStorage implements IStorage {
 
   // Transformation methods
   async createTransformation(transformation: InsertTransformation): Promise<Transformation> {
+    // Add timestamp if not present
+    const transformationWithTimestamp = {
+      ...transformation,
+      created_at: new Date().toISOString()
+    };
+    
     const { data, error } = await supabase
       .from('transformations')
-      .insert([transformation])
+      .insert([transformationWithTimestamp])
       .select()
       .single();
     
@@ -344,5 +365,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Use in-memory storage for now
-export const storage = new MemStorage();
+// Use Supabase for storage
+export const storage = new SupabaseStorage();
