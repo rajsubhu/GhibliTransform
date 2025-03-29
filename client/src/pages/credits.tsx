@@ -178,36 +178,36 @@ export default function CreditsPage() {
   }
 
   return (
-    <div className="container max-w-5xl py-12">
-      <div className="flex flex-col gap-10">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="flex flex-col gap-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4 text-primary">Purchase Credits</h1>
-          <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 text-primary">Purchase Credits</h1>
+          <p className="text-base md:text-lg text-muted-foreground mb-6 max-w-xl mx-auto">
             Transform your photos into beautiful Ghibli-style artwork with our credit packages
           </p>
-          <div className="inline-flex items-center gap-3 bg-muted/50 px-6 py-3 rounded-full shadow-sm border border-muted">
-            <CreditCard className="h-5 w-5 text-primary" />
+          <div className="inline-flex items-center gap-2 bg-muted/50 px-4 py-2 rounded-full shadow-sm border border-muted">
+            <CreditCard className="h-4 w-4 text-primary" />
             <span className="font-medium">Your current balance: </span>
-            <Badge variant="default" className="text-sm font-semibold px-3 py-1 bg-primary">
+            <Badge variant="default" className="text-sm font-semibold px-2 py-0.5 bg-primary">
               {user.credits} credits
             </Badge>
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {creditPackages.map((pkg) => (
             <Card 
               key={pkg.id}
               className={`relative cursor-pointer transition-all hover:shadow-lg ${
                 selectedPackage?.id === pkg.id 
                   ? 'ring-2 ring-primary ring-offset-2 shadow-md' 
-                  : 'border-muted'
+                  : 'border-gray-100'
               }`}
               onClick={() => handlePackageSelect(pkg)}
             >
               {selectedPackage?.id === pkg.id && (
                 <div className="absolute top-3 right-3">
-                  <CheckCircle className="h-6 w-6 text-primary" />
+                  <CheckCircle className="h-5 w-5 text-primary" />
                 </div>
               )}
               <CardHeader className="pb-2">
@@ -218,10 +218,10 @@ export default function CreditsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-baseline mt-2">
-                  <div className="text-4xl font-bold">₹{pkg.amount}</div>
-                  <div className="text-muted-foreground ml-2">one-time</div>
+                  <div className="text-3xl font-bold">₹{pkg.amount}</div>
+                  <div className="text-muted-foreground ml-2 text-sm">one-time</div>
                 </div>
-                <div className="flex items-center mt-4 bg-muted/50 py-2 px-3 rounded-md">
+                <div className="flex items-center mt-3 bg-muted/50 py-1.5 px-3 rounded-md">
                   <Badge variant="outline" className="mr-2 px-2">
                     {pkg.credits}
                   </Badge> 
@@ -229,7 +229,7 @@ export default function CreditsPage() {
                 </div>
                 
                 {pkg.id === 'premium' && (
-                  <Badge variant="secondary" className="mt-4 w-full justify-center py-1">
+                  <Badge variant="secondary" className="mt-3 w-full justify-center py-1">
                     Best Value
                   </Badge>
                 )}
@@ -247,15 +247,15 @@ export default function CreditsPage() {
           ))}
         </div>
 
-        <div className="flex flex-col items-center mt-6">
+        <div className="flex flex-col items-center mt-4">
           <Button 
             size="lg" 
             disabled={!selectedPackage || paymentProcessing} 
             onClick={processPayment}
-            className="px-10 py-6 text-lg font-semibold shadow-md"
+            className="px-8 py-3 font-semibold shadow-sm"
           >
             {paymentProcessing && (
-              <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
             {paymentProcessing 
               ? 'Processing Payment...' 
@@ -263,7 +263,7 @@ export default function CreditsPage() {
                 ? `Pay ₹${selectedPackage.amount} Now` 
                 : 'Select a Package'}
           </Button>
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground">
             Secure payment processed by Razorpay
           </p>
         </div>

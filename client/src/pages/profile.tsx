@@ -138,18 +138,18 @@ export default function Profile() {
   }
 
   return (
-    <div className="container max-w-5xl py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">My Profile</h1>
-      <div className="flex flex-col gap-8">
-        <div className="grid gap-6 md:grid-cols-2">
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <h1 className="text-3xl font-bold mb-6 text-center">My Profile</h1>
+      <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* User Info Card */}
-          <Card className="bg-white shadow-lg border-none">
-            <CardHeader className="pb-4">
+          <Card className="w-full bg-white shadow-md border border-gray-100">
+            <CardHeader className="pb-3">
               <CardTitle className="text-primary">Profile Information</CardTitle>
               <CardDescription>Your account details and current credits</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div>
                   <h3 className="font-medium text-sm text-muted-foreground mb-1">Email</h3>
                   <p className="font-medium">{user.email}</p>
@@ -181,14 +181,14 @@ export default function Profile() {
           </Card>
 
           {/* Instagram Verification Card */}
-          <Card className="bg-white shadow-lg border-none">
-            <CardHeader className="pb-4">
+          <Card className="w-full bg-white shadow-md border border-gray-100">
+            <CardHeader className="pb-3">
               <CardTitle className="text-primary">Get Free Credits</CardTitle>
               <CardDescription>One-time Instagram verification bonus</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmitInstagram)} className="space-y-5">
+                <form onSubmit={form.handleSubmit(onSubmitInstagram)} className="space-y-4">
                   <FormField
                     control={form.control}
                     name="instagram_username"
@@ -224,7 +224,7 @@ export default function Profile() {
         </div>
 
         {/* Activity Tabs */}
-        <Card className="bg-white shadow-lg border-none mt-4">
+        <Card className="w-full bg-white shadow-md border border-gray-100 mt-4">
           <CardHeader className="pb-4">
             <CardTitle className="text-primary">Activity History</CardTitle>
             <CardDescription>Your credits and transformations history</CardDescription>
@@ -239,55 +239,74 @@ export default function Profile() {
               {/* Credits History Tab */}
               <TabsContent value="credits">
                 {creditsQuery.isLoading ? (
-                  <div className="py-8 text-center">Loading credits history...</div>
+                  <div className="py-6 text-center flex items-center justify-center">
+                    <div className="flex flex-col items-center">
+                      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-2"></div>
+                      <p className="text-muted-foreground">Loading credits history...</p>
+                    </div>
+                  </div>
                 ) : creditsQuery.isError ? (
-                  <div className="py-8 text-center text-destructive">
-                    Error loading credits history
+                  <div className="py-6 text-center text-destructive">
+                    <p>Error loading credits history</p>
+                    <p className="text-sm mt-1">Please try again later</p>
                   </div>
                 ) : creditsQuery.data?.transactions?.length === 0 ? (
-                  <div className="py-8 text-center">No credit transactions yet</div>
+                  <div className="py-8 text-center">
+                    <p className="text-lg text-muted-foreground mb-2">No credit transactions yet</p>
+                    <p className="text-sm text-muted-foreground">Credits will appear here when you earn or use them</p>
+                  </div>
                 ) : (
-                  <Table>
-                    <TableCaption>A history of your credit transactions</TableCaption>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Reason</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {creditsQuery.data?.transactions?.map((transaction: any) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>{formatDate(transaction.created_at)}</TableCell>
-                          <TableCell>{getReasonLabel(transaction.reason)}</TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant={transaction.amount > 0 ? 'default' : 'destructive'}>
-                              {transaction.amount > 0 ? '+' : ''}
-                              {transaction.amount}
-                            </Badge>
-                          </TableCell>
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableCaption className="pb-2">Your credit transaction history</TableCaption>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead className="font-medium">Date</TableHead>
+                          <TableHead className="font-medium">Reason</TableHead>
+                          <TableHead className="text-right font-medium">Amount</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {creditsQuery.data?.transactions?.map((transaction: any) => (
+                          <TableRow key={transaction.id} className="hover:bg-muted/10">
+                            <TableCell className="text-sm">{formatDate(transaction.created_at)}</TableCell>
+                            <TableCell className="font-medium">{getReasonLabel(transaction.reason)}</TableCell>
+                            <TableCell className="text-right">
+                              <Badge variant={transaction.amount > 0 ? 'default' : 'destructive'} className="px-2 py-0.5">
+                                {transaction.amount > 0 ? '+' : ''}
+                                {transaction.amount}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </TabsContent>
 
               {/* Transformations Tab */}
               <TabsContent value="transformations">
                 {transformationsQuery.isLoading ? (
-                  <div className="py-8 text-center">Loading transformations...</div>
+                  <div className="py-6 text-center flex items-center justify-center">
+                    <div className="flex flex-col items-center">
+                      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-2"></div>
+                      <p className="text-muted-foreground">Loading your transformations...</p>
+                    </div>
+                  </div>
                 ) : transformationsQuery.isError ? (
-                  <div className="py-8 text-center text-destructive">
+                  <div className="py-6 text-center text-destructive">
                     Error loading transformations
                   </div>
                 ) : transformationsQuery.data?.length === 0 ? (
-                  <div className="py-8 text-center">No transformations yet</div>
+                  <div className="py-8 text-center">
+                    <p className="text-lg text-muted-foreground mb-2">No transformations yet</p>
+                    <p className="text-sm text-muted-foreground">Upload an image on the home page to create your first transformation</p>
+                  </div>
                 ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {transformationsQuery.data?.map((transformation: any) => (
-                      <Card key={transformation.id} className="overflow-hidden border-none shadow-md hover:shadow-lg transition-all">
+                      <Card key={transformation.id} className="overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all">
                         <CardContent className="p-0">
                           <div className="relative">
                             <div className="aspect-square relative overflow-hidden">
@@ -295,17 +314,17 @@ export default function Profile() {
                                 <img
                                   src={transformation.transformed_image}
                                   alt="Transformed image"
-                                  className="object-cover w-full h-full hover:scale-105 transition-transform"
+                                  className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
                                 />
                               ) : (
-                                <div className="flex items-center justify-center h-full bg-muted p-4">
+                                <div className="flex items-center justify-center h-full bg-muted/40 p-4">
                                   <Badge variant="outline" className="px-3 py-1">
                                     {transformation.status || 'Processing'}
                                   </Badge>
                                 </div>
                               )}
                             </div>
-                            <div className="p-3 bg-white">
+                            <div className="p-3 bg-white border-t border-gray-100">
                               <div className="flex justify-between items-center">
                                 <Badge variant="secondary" className="font-medium">
                                   Ghibli Style
