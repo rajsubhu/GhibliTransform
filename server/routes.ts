@@ -8,6 +8,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { insertUserSchema } from "@shared/schema";
 import Razorpay from 'razorpay';
+import Stripe from 'stripe';
 import crypto from 'crypto';
 
 // Initialize Razorpay
@@ -15,6 +16,14 @@ const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || '',
   key_secret: process.env.RAZORPAY_KEY_SECRET || ''
 });
+
+// Initialize Stripe (conditionally based on key availability)
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2023-08-16' as any
+  });
+}
 
 // Define types for type safety
 // Import Express's File type definition but make our own compatible version
@@ -112,6 +121,19 @@ const razorpayVerificationSchema = z.object({
   razorpay_order_id: z.string(),
   razorpay_payment_id: z.string(),
   razorpay_signature: z.string(),
+  credits: z.number().positive(),
+});
+
+// Stripe payment intent schema
+const stripePaymentIntentSchema = z.object({
+  amount: z.number().positive(),
+  currency: z.string().default("usd"),
+  credits: z.number().positive(),
+});
+
+// Stripe payment confirmation schema
+const stripePaymentConfirmationSchema = z.object({
+  paymentIntentId: z.string(),
   credits: z.number().positive(),
 });
 
@@ -235,6 +257,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         credits: user.credits,
         instagram_username: user.instagram_username,
+        instagram_verified: user.instagram_verified,
+        is_admin: user.is_admin
       });
     } catch (error) {
       console.error("Get user error:", error);
@@ -242,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Instagram verification and credit earning
+  // Instagram verification and credit earning (one-time only)
   app.post("/api/user/verify-instagram", authMiddleware, async (req: MulterRequest, res: Response) => {
     try {
       const result = instagramVerificationSchema.safeParse(req.body);
@@ -256,15 +280,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user;
       const { instagram_username } = result.data;
       
+      // Check if user has already verified Instagram
+      if (user.instagram_verified === 1) {
+        return res.status(400).json({ 
+          message: "Instagram has already been verified for this account" 
+        });
+      }
+      
       // For now, we'll just pretend to verify and grant credits
       // In a real app, you'd do an actual verification through Instagram's API
       
-      // Update user's Instagram username
-      const updatedUser = await storage.updateUserCredits(user.id, user.credits + 2);
+      // Update user's Instagram verification status
+      const updatedUser = await storage.updateUserInstagramVerified(user.id);
       
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
+      
+      // Update user's credits
+      const userWithCredits = await storage.updateUserCredits(updatedUser.id, updatedUser.credits + 2);
       
       // Add credits transaction
       await storage.createCreditsTransaction({
@@ -275,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       return res.status(200).json({
         message: "Instagram verified and credits awarded",
-        credits: updatedUser.credits,
+        credits: userWithCredits?.credits,
       });
     } catch (error) {
       console.error("Instagram verification error:", error);
@@ -507,7 +541,248 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Verify a payment
+  // Admin route to get all users
+  app.get("/api/admin/users", authMiddleware, async (req: MulterRequest, res: Response) => {
+    try {
+      const user = req.user;
+      
+      // Check if user is admin
+      if (user.is_admin !== 1) {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+      
+      // Get all users
+      const users = await storage.getAllUsers();
+      
+      return res.status(200).json({
+        users: users.map(user => ({
+          id: user.id,
+          email: user.email,
+          credits: user.credits,
+          instagram_username: user.instagram_username,
+          instagram_verified: user.instagram_verified,
+          is_admin: user.is_admin,
+          created_at: user.created_at
+        }))
+      });
+    } catch (error) {
+      console.error("Admin get users error:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Admin route to set admin status
+  app.post("/api/admin/set-admin", authMiddleware, async (req: MulterRequest, res: Response) => {
+    try {
+      const user = req.user;
+      
+      // Check if user is already admin
+      if (user.is_admin !== 1) {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+      
+      // Validate request body
+      const result = z.object({
+        userId: z.string(),
+        isAdmin: z.boolean()
+      }).safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { userId, isAdmin } = result.data;
+      
+      // Update user admin status
+      const updatedUser = await storage.updateUserAdmin(userId, isAdmin);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      return res.status(200).json({
+        message: `User ${isAdmin ? 'granted' : 'revoked'} admin privileges`,
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          is_admin: updatedUser.is_admin
+        }
+      });
+    } catch (error) {
+      console.error("Admin set admin error:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Admin route to update user credits
+  app.post("/api/admin/update-credits", authMiddleware, async (req: MulterRequest, res: Response) => {
+    try {
+      const user = req.user;
+      
+      // Check if user is admin
+      if (user.is_admin !== 1) {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+      
+      // Validate request body
+      const result = z.object({
+        userId: z.string(),
+        credits: z.number().int(),
+        reason: z.string()
+      }).safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { userId, credits, reason } = result.data;
+      
+      // Get target user
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Calculate credit change
+      const creditChange = credits - targetUser.credits;
+      
+      // Update user credits
+      const updatedUser = await storage.updateUserCredits(userId, credits);
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update credits" });
+      }
+      
+      // Record the transaction
+      await storage.createCreditsTransaction({
+        user_id: userId,
+        amount: creditChange,
+        reason: 'admin'
+      });
+      
+      return res.status(200).json({
+        message: "Credits updated successfully",
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          credits: updatedUser.credits
+        }
+      });
+    } catch (error) {
+      console.error("Admin update credits error:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Stripe payment routes
+  // Create a payment intent
+  app.post("/api/create-payment-intent", authMiddleware, async (req: MulterRequest, res: Response) => {
+    try {
+      // Validate request body
+      const result = stripePaymentIntentSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { amount, currency, credits } = result.data;
+      
+      // Ensure we have Stripe keys and initialization
+      if (!process.env.STRIPE_SECRET_KEY || !stripe) {
+        return res.status(500).json({ 
+          message: "Server configuration error: Missing payment gateway credentials" 
+        });
+      }
+      
+      // Create a payment intent
+      // Type assertion is safe here because we've checked that stripe is not null
+      const paymentIntent = await (stripe as Stripe).paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to smallest currency unit (cents for USD)
+        currency,
+        metadata: {
+          userId: req.user.id,
+          credits: credits.toString(),
+          purpose: 'credit_purchase'
+        }
+      });
+      
+      return res.status(200).json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        credits
+      });
+    } catch (error) {
+      console.error("Create payment intent error:", error);
+      return res.status(500).json({ message: "Failed to create payment intent" });
+    }
+  });
+  
+  // Confirm Stripe payment
+  app.post("/api/confirm-stripe-payment", authMiddleware, async (req: MulterRequest, res: Response) => {
+    try {
+      // Validate request body
+      const result = stripePaymentConfirmationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { paymentIntentId, credits } = result.data;
+      
+      // Ensure we have Stripe keys and initialization
+      if (!process.env.STRIPE_SECRET_KEY || !stripe) {
+        return res.status(500).json({ 
+          message: "Server configuration error: Missing payment gateway credentials" 
+        });
+      }
+      
+      // Retrieve the payment intent to verify its status
+      // Type assertion is safe here because we've checked that stripe is not null
+      const paymentIntent = await (stripe as Stripe).paymentIntents.retrieve(paymentIntentId);
+      
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: `Payment not successful. Status: ${paymentIntent.status}` });
+      }
+      
+      // Add credits to user
+      const user = req.user;
+      const updatedUser = await storage.updateUserCredits(user.id, user.credits + credits);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Record the transaction
+      await storage.createCreditsTransaction({
+        user_id: user.id,
+        amount: credits,
+        reason: 'purchase'
+      });
+      
+      return res.status(200).json({
+        message: "Payment verified and credits added",
+        payment_id: paymentIntentId,
+        credits: updatedUser.credits
+      });
+    } catch (error) {
+      console.error("Confirm Stripe payment error:", error);
+      return res.status(500).json({ message: "Failed to verify payment" });
+    }
+  });
+  
+  // Verify a Razorpay payment
   app.post("/api/verify-payment", authMiddleware, async (req: MulterRequest, res: Response) => {
     try {
       // Validate request body

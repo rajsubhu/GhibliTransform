@@ -9,8 +9,11 @@ export interface IStorage {
   // User methods
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<User | undefined>;
+  updateUserInstagramVerified(userId: string): Promise<User | undefined>;
+  updateUserAdmin(userId: string, isAdmin: boolean): Promise<User | undefined>;
   
   // Credits transaction methods
   createCreditsTransaction(transaction: InsertCreditsTransaction): Promise<CreditsTransaction>;
@@ -46,6 +49,16 @@ export class SupabaseStorage implements IStorage {
     if (error || !data) return undefined;
     return data as User;
   }
+  
+  async getAllUsers(): Promise<User[]> {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error || !data) return [];
+    return data as User[];
+  }
 
   async createUser(user: InsertUser): Promise<User> {
     const { data, error } = await supabase
@@ -72,6 +85,30 @@ export class SupabaseStorage implements IStorage {
     const { data, error } = await supabase
       .from('users')
       .update({ credits })
+      .eq('id', userId)
+      .select()
+      .single();
+    
+    if (error || !data) return undefined;
+    return data as User;
+  }
+  
+  async updateUserInstagramVerified(userId: string): Promise<User | undefined> {
+    const { data, error } = await supabase
+      .from('users')
+      .update({ instagram_verified: 1 })
+      .eq('id', userId)
+      .select()
+      .single();
+    
+    if (error || !data) return undefined;
+    return data as User;
+  }
+  
+  async updateUserAdmin(userId: string, isAdmin: boolean): Promise<User | undefined> {
+    const { data, error } = await supabase
+      .from('users')
+      .update({ is_admin: isAdmin ? 1 : 0 })
       .eq('id', userId)
       .select()
       .single();
@@ -179,6 +216,15 @@ export class MemStorage implements IStorage {
       (user) => user.email === email,
     );
   }
+  
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).sort((a, b) => {
+      // Convert string dates to timestamps for comparison
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+  }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = crypto.randomUUID();
@@ -189,7 +235,9 @@ export class MemStorage implements IStorage {
       id, 
       created_at: now,
       credits: 1,
-      instagram_username: insertUser.instagram_username || null
+      instagram_username: insertUser.instagram_username || null,
+      instagram_verified: 0,
+      is_admin: 0
     };
     
     this.users.set(id, user);
@@ -209,6 +257,24 @@ export class MemStorage implements IStorage {
     if (!user) return undefined;
 
     const updatedUser = { ...user, credits };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async updateUserInstagramVerified(userId: string): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+
+    const updatedUser = { ...user, instagram_verified: 1 };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async updateUserAdmin(userId: string, isAdmin: boolean): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+
+    const updatedUser = { ...user, is_admin: isAdmin ? 1 : 0 };
     this.users.set(userId, updatedUser);
     return updatedUser;
   }

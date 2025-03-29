@@ -7,6 +7,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   credits: integer("credits").notNull().default(1),
   instagram_username: text("instagram_username"),
+  instagram_verified: integer("instagram_verified").notNull().default(0),
+  is_admin: integer("is_admin").notNull().default(0),
   created_at: text("created_at").notNull(),
 });
 
@@ -14,6 +16,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   credits: true,
   instagram_username: true,
+  instagram_verified: true,
+  is_admin: true,
 });
 
 export const credits_transactions = pgTable("credits_transactions", {
