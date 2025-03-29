@@ -8,7 +8,6 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { insertUserSchema } from "@shared/schema";
 import Razorpay from 'razorpay';
-import Stripe from 'stripe';
 import crypto from 'crypto';
 
 // Initialize Razorpay
@@ -16,14 +15,6 @@ const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || '',
   key_secret: process.env.RAZORPAY_KEY_SECRET || ''
 });
-
-// Initialize Stripe (conditionally based on key availability)
-let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2023-08-16' as any
-  });
-}
 
 // Define types for type safety
 // Import Express's File type definition but make our own compatible version
@@ -124,18 +115,8 @@ const razorpayVerificationSchema = z.object({
   credits: z.number().positive(),
 });
 
-// Stripe payment intent schema
-const stripePaymentIntentSchema = z.object({
-  amount: z.number().positive(),
-  currency: z.string().default("usd"),
-  credits: z.number().positive(),
-});
-
-// Stripe payment confirmation schema
-const stripePaymentConfirmationSchema = z.object({
-  paymentIntentId: z.string(),
-  credits: z.number().positive(),
-});
+// Schema definitions for payment handling
+// Using only Razorpay as requested by the user
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
@@ -680,109 +661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Stripe payment routes
-  // Create a payment intent
-  app.post("/api/create-payment-intent", authMiddleware, async (req: MulterRequest, res: Response) => {
-    try {
-      // Validate request body
-      const result = stripePaymentIntentSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          message: "Invalid request data", 
-          errors: result.error.errors 
-        });
-      }
-      
-      const { amount, currency, credits } = result.data;
-      
-      // Ensure we have Stripe keys and initialization
-      if (!process.env.STRIPE_SECRET_KEY || !stripe) {
-        return res.status(500).json({ 
-          message: "Server configuration error: Missing payment gateway credentials" 
-        });
-      }
-      
-      // Create a payment intent
-      // Type assertion is safe here because we've checked that stripe is not null
-      const paymentIntent = await (stripe as Stripe).paymentIntents.create({
-        amount: Math.round(amount * 100), // Convert to smallest currency unit (cents for USD)
-        currency,
-        metadata: {
-          userId: req.user.id,
-          credits: credits.toString(),
-          purpose: 'credit_purchase'
-        }
-      });
-      
-      return res.status(200).json({
-        clientSecret: paymentIntent.client_secret,
-        paymentIntentId: paymentIntent.id,
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
-        credits
-      });
-    } catch (error) {
-      console.error("Create payment intent error:", error);
-      return res.status(500).json({ message: "Failed to create payment intent" });
-    }
-  });
-  
-  // Confirm Stripe payment
-  app.post("/api/confirm-stripe-payment", authMiddleware, async (req: MulterRequest, res: Response) => {
-    try {
-      // Validate request body
-      const result = stripePaymentConfirmationSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          message: "Invalid request data", 
-          errors: result.error.errors 
-        });
-      }
-      
-      const { paymentIntentId, credits } = result.data;
-      
-      // Ensure we have Stripe keys and initialization
-      if (!process.env.STRIPE_SECRET_KEY || !stripe) {
-        return res.status(500).json({ 
-          message: "Server configuration error: Missing payment gateway credentials" 
-        });
-      }
-      
-      // Retrieve the payment intent to verify its status
-      // Type assertion is safe here because we've checked that stripe is not null
-      const paymentIntent = await (stripe as Stripe).paymentIntents.retrieve(paymentIntentId);
-      
-      if (paymentIntent.status !== 'succeeded') {
-        return res.status(400).json({ message: `Payment not successful. Status: ${paymentIntent.status}` });
-      }
-      
-      // Add credits to user
-      const user = req.user;
-      const updatedUser = await storage.updateUserCredits(user.id, user.credits + credits);
-      
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      // Record the transaction
-      await storage.createCreditsTransaction({
-        user_id: user.id,
-        amount: credits,
-        reason: 'purchase'
-      });
-      
-      return res.status(200).json({
-        message: "Payment verified and credits added",
-        payment_id: paymentIntentId,
-        credits: updatedUser.credits
-      });
-    } catch (error) {
-      console.error("Confirm Stripe payment error:", error);
-      return res.status(500).json({ message: "Failed to verify payment" });
-    }
-  });
-  
-  // Verify a Razorpay payment
+  // Payment verification for Razorpay
   app.post("/api/verify-payment", authMiddleware, async (req: MulterRequest, res: Response) => {
     try {
       // Validate request body
