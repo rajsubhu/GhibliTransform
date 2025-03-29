@@ -40,17 +40,8 @@ export function ImageTransformer() {
       const formData = new FormData();
       formData.append("image", file);
       
-      const res = await fetch("/api/transform", {
-        method: "POST",
-        body: formData,
-      });
-      
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to transform image");
-      }
-      
-      return await res.json();
+      // Use the apiRequest helper to include auth token
+      return apiRequest("POST", "/api/transform", formData, true);
     },
     onSuccess: (data) => {
       setTransformationId(data.id);
@@ -72,15 +63,12 @@ export function ImageTransformer() {
     queryFn: async () => {
       if (!transformationId) return null;
       
-      const res = await fetch(`/api/transform/${transformationId}`);
-      if (!res.ok) {
-        throw new Error("Failed to get transformation status");
-      }
-      
-      return await res.json();
+      // Use the getQueryFn helper with auth token
+      return apiRequest("GET", `/api/transform/${transformationId}`);
     },
     enabled: !!transformationId,
-    refetchInterval: (data) => {
+    refetchInterval: (data: any) => {
+      // Type assertion helps TypeScript understand the structure
       return data && (data.status === "succeeded" || data.status === "failed")
         ? false
         : 2000;
@@ -89,7 +77,7 @@ export function ImageTransformer() {
   
   // When transformation completes, set the transformed image URL
   useEffect(() => {
-    const data = transformationQuery.data;
+    const data = transformationQuery.data as any;
     if (data && data.status === "succeeded") {
       setTransformedImageUrl(data.output);
     } else if (data && data.status === "failed") {
@@ -134,9 +122,9 @@ export function ImageTransformer() {
   };
   
   // Determine the status of the transformation
+  const queryData = transformationQuery.data as any;
   const isLoading = transformMutation.isPending || 
-    (transformationQuery.data?.status === "processing" || 
-     transformationQuery.data?.status === "starting");
+    (queryData && (queryData.status === "processing" || queryData.status === "starting"));
   
   const isComplete = transformedImageUrl !== null;
   

@@ -498,7 +498,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: order.id,
         amount: order.amount,
         currency: order.currency,
-        credits
+        credits,
+        key_id: process.env.RAZORPAY_KEY_ID
       });
     } catch (error) {
       console.error("Create order error:", error);

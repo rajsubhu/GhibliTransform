@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CreditCard, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 // Define credit packages
 const creditPackages = [
@@ -34,25 +35,11 @@ export default function CreditsPage() {
   // Create an order
   const createOrderMutation = useMutation({
     mutationFn: async (packageData: { amount: number; credits: number }) => {
-      const response = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify({
-          amount: packageData.amount,
-          credits: packageData.credits,
-          currency: 'INR',
-        }),
+      return apiRequest('POST', '/api/create-order', {
+        amount: packageData.amount,
+        credits: packageData.credits,
+        currency: 'INR',
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create payment order');
-      }
-
-      return response.json();
     },
     onError: (error) => {
       toast({
@@ -67,21 +54,7 @@ export default function CreditsPage() {
   // Verify payment
   const verifyPaymentMutation = useMutation({
     mutationFn: async (paymentData: z.infer<typeof razorpayResponseSchema> & { credits: number }) => {
-      const response = await fetch('/api/verify-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify(paymentData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to verify payment');
-      }
-
-      return response.json();
+      return apiRequest('POST', '/api/verify-payment', paymentData);
     },
     onSuccess: (data) => {
       toast({
@@ -129,7 +102,7 @@ export default function CreditsPage() {
 
       // Initialize Razorpay
       const options = {
-        key: import.meta.env.RAZORPAY_KEY_ID || 'rzp_test_G4sUh6NLyupCY1',
+        key: orderData.key_id,
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Ghiblify',

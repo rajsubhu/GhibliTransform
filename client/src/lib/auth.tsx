@@ -69,14 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      const response = await apiRequest('POST', '/api/auth/login', { email, password });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
-      }
-      
-      const data = await response.json();
+      // apiRequest now returns JSON data directly
+      const data = await apiRequest('POST', '/api/auth/login', { email, password });
       
       // Save token and user data
       localStorage.setItem('authToken', data.token);
@@ -98,16 +92,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      const response = await apiRequest('POST', '/api/auth/register', { 
+      // apiRequest now returns JSON data directly
+      await apiRequest('POST', '/api/auth/register', { 
         email, 
         password,
         instagram_username
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
-      }
       
       // Auto-login after successful registration
       await login(email, password);
@@ -148,21 +138,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Not authenticated');
       }
       
-      const response = await fetch('/api/user/verify-instagram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ instagram_username })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Instagram verification failed');
-      }
-      
-      const data = await response.json();
+      // Use apiRequest which handles token automatically
+      const data = await apiRequest('POST', '/api/user/verify-instagram', { instagram_username });
       
       // Update user with new credits
       setUser(prev => prev ? { ...prev, credits: data.credits } : null);

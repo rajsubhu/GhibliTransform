@@ -81,14 +81,7 @@ export default function Profile() {
   const creditsQuery = useQuery({
     queryKey: ['/api/user/credits'],
     queryFn: async () => {
-      const response = await fetch('/api/user/credits', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch credits history');
-      return response.json();
+      return apiRequest('GET', '/api/user/credits');
     },
     enabled: !!user,
   });
@@ -97,14 +90,7 @@ export default function Profile() {
   const transformationsQuery = useQuery({
     queryKey: ['/api/user/transformations'],
     queryFn: async () => {
-      const response = await fetch('/api/user/transformations', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch transformations');
-      return response.json();
+      return apiRequest('GET', '/api/user/transformations');
     },
     enabled: !!user,
   });
