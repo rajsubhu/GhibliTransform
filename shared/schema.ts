@@ -1,36 +1,56 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  credits: integer("credits").notNull().default(1),
+  instagram_username: text("instagram_username"),
+  created_at: text("created_at").notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+  email: true,
+  credits: true,
+  instagram_username: true,
+});
+
+export const credits_transactions = pgTable("credits_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  user_id: uuid("user_id").references(() => users.id).notNull(),
+  amount: integer("amount").notNull(),
+  reason: text("reason", { enum: ['initial', 'instagram_follow', 'admin', 'generation'] }).notNull(),
+  created_at: text("created_at").notNull(),
+});
+
+export const insertCreditsTransactionSchema = createInsertSchema(credits_transactions).pick({
+  user_id: true,
+  amount: true,
+  reason: true,
 });
 
 export const transformations = pgTable("transformations", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  originalImage: text("original_image").notNull(),
-  transformedImage: text("transformed_image"),
+  user_id: uuid("user_id").references(() => users.id),
+  original_image: text("original_image").notNull(),
+  transformed_image: text("transformed_image"),
   status: text("status").notNull().default("pending"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  created_at: text("created_at").notNull(),
 });
 
 export const insertTransformationSchema = createInsertSchema(transformations).pick({
-  userId: true,
-  originalImage: true,
-  transformedImage: true,
+  user_id: true,
+  original_image: true,
+  transformed_image: true,
   status: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export type InsertCreditsTransaction = z.infer<typeof insertCreditsTransactionSchema>;
+export type CreditsTransaction = typeof credits_transactions.$inferSelect;
 
 export type InsertTransformation = z.infer<typeof insertTransformationSchema>;
 export type Transformation = typeof transformations.$inferSelect;
