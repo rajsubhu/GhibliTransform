@@ -18,18 +18,18 @@ export function Header() {
         <nav className="hidden md:block">
           <ul className="flex space-x-6">
             <li>
-              <Link href="/">
-                <a className="font-medium hover:text-primary transition-all">Home</a>
+              <Link href="/" className="font-medium hover:text-primary transition-all">
+                Home
               </Link>
             </li>
             <li>
-              <Link href="/gallery">
-                <a className="font-medium hover:text-primary transition-all">Gallery</a>
+              <Link href="/gallery" className="font-medium hover:text-primary transition-all">
+                Gallery
               </Link>
             </li>
             <li>
-              <Link href="/about">
-                <a className="font-medium hover:text-primary transition-all">About</a>
+              <Link href="/about" className="font-medium hover:text-primary transition-all">
+                About
               </Link>
             </li>
           </ul>
@@ -50,18 +50,18 @@ export function Header() {
           <div className="absolute top-16 right-0 left-0 bg-white shadow-md z-50 md:hidden">
             <ul className="py-2 px-4">
               <li className="py-2 border-b">
-                <Link href="/">
-                  <a className="block font-medium hover:text-primary transition-all">Home</a>
+                <Link href="/" className="block font-medium hover:text-primary transition-all">
+                  Home
                 </Link>
               </li>
               <li className="py-2 border-b">
-                <Link href="/gallery">
-                  <a className="block font-medium hover:text-primary transition-all">Gallery</a>
+                <Link href="/gallery" className="block font-medium hover:text-primary transition-all">
+                  Gallery
                 </Link>
               </li>
               <li className="py-2">
-                <Link href="/about">
-                  <a className="block font-medium hover:text-primary transition-all">About</a>
+                <Link href="/about" className="block font-medium hover:text-primary transition-all">
+                  About
                 </Link>
               </li>
             </ul>

@@ -1,10 +1,27 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from "node-fetch";
 import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+
+// Define types for type safety
+// Import Express's File type definition but make our own compatible version
+// that doesn't require the 'stream' property
+type MulterFile = Express.Multer.File;
+
+// Create a custom request type that includes the file property
+interface MulterRequest extends Request {
+  file?: MulterFile;
+}
+
+interface ReplicatePrediction {
+  id: string;
+  status: string;
+  output?: string | string[];
+  error?: string;
+}
 
 // Configure multer for memory storage
 const upload = multer({
@@ -16,7 +33,7 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Transform image using Replicate API
-  app.post("/api/transform", upload.single("image"), async (req, res) => {
+  app.post("/api/transform", upload.single("image"), async (req: MulterRequest, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No image file uploaded" });
@@ -42,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const base64Image = req.file.buffer.toString("base64");
       const dataURI = `data:${req.file.mimetype};base64,${base64Image}`;
 
-      // Call Replicate API
+      // Call Replicate API for Mirage Ghibli model
       const response = await fetch("https://api.replicate.com/v1/predictions", {
         method: "POST",
         headers: {
@@ -50,9 +67,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "Authorization": `Token ${REPLICATE_API_KEY}`
         },
         body: JSON.stringify({
-          version: "c09d3648fd62c9fc1bbb70a928d8fe56ef3dcd844c9ab9c2eefbf3df8dbbd2bb",
+          // Use the Mirage Ghibli model version
+          version: "3dbb3f4e46500c7a342d67d86669b4b934fe78b3c662646f7bce3250b4b0ad27",
           input: {
-            image: dataURI
+            image: dataURI,
+            // Add optional parameters
+            strength: 0.75,  // How strongly to transform the image (0-1)
+            guidance_scale: 7.5 // How closely to follow the prompt (higher values = closer)
           }
         }),
       });
@@ -66,7 +87,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const prediction = await response.json();
+      const prediction = await response.json() as ReplicatePrediction;
       
       // Store original image for reference (if we had a real storage system)
       const transformationData = {
@@ -90,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get transformation status
-  app.get("/api/transform/:id", async (req, res) => {
+  app.get("/api/transform/:id", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -119,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const prediction = await response.json();
+      const prediction = await response.json() as ReplicatePrediction;
       return res.status(200).json(prediction);
     } catch (error) {
       console.error("Get transformation error:", error);
