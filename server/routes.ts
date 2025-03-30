@@ -12,8 +12,8 @@ import crypto from 'crypto';
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || '',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || ''
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_ZLEbNhLs2qHoxB',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'd9A2spI4j50n72t8tUvjkg98'
 });
 
 // Define types for type safety
